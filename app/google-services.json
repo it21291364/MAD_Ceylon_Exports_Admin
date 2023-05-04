@@ -1,0 +1,68 @@
+{
+  "project_info": {
+    "project_number": "681310950908",
+    "project_id": "ceylonexport-bafef",
+    "storage_bucket": "ceylonexport-bafef.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:681310950908:android:ad6eafbb616ef6ff910e79",
+        "android_client_info": {
+          "package_name": "org.meicode.ceylonexportsadmin"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "681310950908-h996h9ok8kg3jo2dm1c4faebc62br5c2.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCT_dGrrGbmqp3WGeGI1ZBFltI9e1xJaPM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "681310950908-h996h9ok8kg3jo2dm1c4faebc62br5c2.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:681310950908:android:bed55fcc9509e448910e79",
+        "android_client_info": {
+          "package_name": "org.meicode.ceylonexportsproductmanagement"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "681310950908-h996h9ok8kg3jo2dm1c4faebc62br5c2.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCT_dGrrGbmqp3WGeGI1ZBFltI9e1xJaPM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "681310950908-h996h9ok8kg3jo2dm1c4faebc62br5c2.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
