@@ -1,15 +1,13 @@
 package org.meicode.ceylonexportsadmin.model
 
-import android.accounts.AuthenticatorDescription
+class AddProductModel : java.io.Serializable {
+    var productName: String? = ""
+    var productDescription: String? = ""
+    var productCoverImg: String? = ""
+    var productCategory: String? = ""
+    var productId: String? = ""
+    var productMrp: String? = ""
+    var productSp: String? = ""
+    var productImages: ArrayList<String> = ArrayList()
+}
 
-data class AddProductModel(
-    val productName: String? = "",
-    val productDescription: String? = "",
-    val productCoverImg: String? = "",
-    val productCategory: String? = "",
-    val productId: String? = "",
-    val productMrp: String? = "",
-    val productSp: String? = "",
-    val productImages: ArrayList<String>
-
-)

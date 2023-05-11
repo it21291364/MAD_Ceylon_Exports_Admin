@@ -9,7 +9,7 @@
         android:id="@+id/homeFragment"
         android:name="org.meicode.ceylonexportsadmin.fragments.HomeFragment"
         android:label="fragment_home"
-        tools:layout="@layout/fragment_home" >
+        tools:layout="@layout/fragment_home">
         <action
             android:id="@+id/action_homeFragment_to_categoryFragment"
             app:destination="@id/categoryFragment" />
@@ -34,14 +34,33 @@
         android:id="@+id/categoryFragment"
         android:name="org.meicode.ceylonexportsadmin.fragments.CategoryFragment"
         android:label="fragment_category"
-        tools:layout="@layout/fragment_category" />
+        tools:layout="@layout/fragment_category">
+        <action
+            android:id="@+id/action_categoryFragment_to_AddCategoryFragment"
+            app:destination="@id/addCategoryFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/addCategoryFragment"
+        android:name="org.meicode.ceylonexportsadmin.fragments.AddCategoryFragment"
+        android:label="fragment_add_category"
+        tools:layout="@layout/fragment_add_category">
+    </fragment>
     <fragment
         android:id="@+id/productFragment"
         android:name="org.meicode.ceylonexportsadmin.fragments.ProductFragment"
         android:label="fragment_product"
-        tools:layout="@layout/fragment_product" >
+        tools:layout="@layout/fragment_product">
         <action
             android:id="@+id/action_productFragment_to_addProductFragment"
             app:destination="@id/addProductFragment" />
+        <action
+            android:id="@+id/action_productFragment_to_updateProductFragment"
+            app:destination="@id/updateProductFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/updateProductFragment"
+        android:name="org.meicode.ceylonexportsadmin.fragments.UpdateProductFragment"
+        android:label="Update Product"
+        tools:layout="@layout/fragment_update_product">
     </fragment>
 </navigation>

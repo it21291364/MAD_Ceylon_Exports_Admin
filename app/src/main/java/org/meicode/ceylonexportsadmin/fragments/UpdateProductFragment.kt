@@ -9,27 +9,27 @@ import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
-import android.view.View.VISIBLE
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import com.bumptech.glide.Glide
 import com.google.firebase.firestore.ktx.firestore
-import com.google.firebase.firestore.ktx.toObject
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.FirebaseStorage
 import org.meicode.ceylonexportsadmin.R
 import org.meicode.ceylonexportsadmin.adapter.AddProductImageAdapter
+import org.meicode.ceylonexportsadmin.adapter.ProductsImagesAdapter
 import org.meicode.ceylonexportsadmin.databinding.FragmentAddProductBinding
+import org.meicode.ceylonexportsadmin.databinding.FragmentUpdateProductBinding
 import org.meicode.ceylonexportsadmin.model.AddProductModel
 import org.meicode.ceylonexportsadmin.model.CategoryModel
 import java.util.*
 import kotlin.collections.ArrayList
 
-//create a fragment that allows the user to add a new product to a database.
-class AddProductFragment : Fragment() {
-    private lateinit var binding: FragmentAddProductBinding//bind views in the layout file to properties in the Kotlin code;
+class UpdateProductFragment : Fragment() {
+
+    private lateinit var binding: FragmentUpdateProductBinding//bind views in the layout file to properties in the Kotlin code;
     private lateinit var list: ArrayList<Uri>//holds Uri objects that represent images selected by the user
     private lateinit var listImages: ArrayList<String>//holds String objects that represent the URLs of the images uploaded to the Firebase Storage
     private lateinit var adapter: AddProductImageAdapter//display the images selected by the user in a RecyclerView
@@ -39,6 +39,10 @@ class AddProductFragment : Fragment() {
     private lateinit var categoryList: ArrayList<String>//holds the names of the categories available in the database.
 
 
+    var data = AddProductModel()
+    private var isCoverUpdate: Boolean = false
+    private var isProductImagesUpdate: Boolean = false
+
     private var launchGalleryActivity =
         registerForActivityResult(//launchGalleryActivity--->launch the gallery app to select the cover image
             ActivityResultContracts.StartActivityForResult()
@@ -46,7 +50,8 @@ class AddProductFragment : Fragment() {
             if (it.resultCode == Activity.RESULT_OK) {
                 coverImage = it.data!!.data
                 binding.productCoverImg.setImageURI(coverImage)
-                binding.productCoverImg.visibility = VISIBLE
+                binding.productCoverImg.visibility = View.VISIBLE
+                isCoverUpdate = true
             }
         }
 
@@ -57,17 +62,23 @@ class AddProductFragment : Fragment() {
             if (it.resultCode == Activity.RESULT_OK) {
                 val imageUrl = it.data!!.data
                 list.add(imageUrl!!)
+                isProductImagesUpdate = true
+                binding.localProductIamgesRv.visibility = View.VISIBLE
+                binding.productImagesRv.visibility = View.GONE
                 adapter.notifyDataSetChanged()
             }
         }
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+    }
 
-    override fun onCreateView(//layout file for the fragment and sets up event listeners for the UI components
+    override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
         // Inflate the layout for this fragment
-        binding = FragmentAddProductBinding.inflate(layoutInflater)
+        binding = FragmentUpdateProductBinding.inflate(layoutInflater)
 
         list = ArrayList()
         listImages = ArrayList()
@@ -88,11 +99,34 @@ class AddProductFragment : Fragment() {
             launchProductActivity.launch(intent)
         }
 
+        adapter = AddProductImageAdapter(list)
+        binding.localProductIamgesRv.adapter = adapter
+
+
+        if (arguments?.getSerializable("product") != null) {
+            data = arguments?.getSerializable("product") as AddProductModel
+            Log.d("testOk", data.toString())
+            binding.productNameEdt.setText(data!!.productName)
+            binding.productDescriptionEdt.setText(data!!.productDescription)
+            binding.productMrpEdt.setText(data!!.productMrp)
+            binding.productSpEdt.setText(data!!.productSp)
+            Glide.with(this).load(data!!.productCoverImg).into(binding.productCoverImg)
+
+            coverImgUrl = data.productCoverImg
+            listImages = data.productImages
+
+
+            Glide.with(this).load(coverImgUrl).into(binding.productCoverImg)
+
+            //handle list of products
+            Log.d("productLIsezi", listImages.size.toString())
+            var adapter = ProductsImagesAdapter(requireActivity(), listImages)
+            binding.productImagesRv.adapter = adapter
+            adapter.notifyDataSetChanged()
+        }
 
         setProductCategory()//populate the Spinner with the available categories
 
-        adapter = AddProductImageAdapter(list)
-        binding.productImgRecyclerView.adapter = adapter
 
         binding.submitProductBtn.setOnClickListener {
             validateData()
@@ -108,14 +142,16 @@ class AddProductFragment : Fragment() {
         } else if (binding.productSpEdt.text.toString().isEmpty()) {
             binding.productSpEdt.requestFocus()
             binding.productSpEdt.error = "Empty"
-        } else if (coverImage == null) {//// if the user has selected a cover image and
-            Toast.makeText(requireContext(), "Please select a cover image", Toast.LENGTH_SHORT)
-                .show()
-        } else if (list.size < 1) {//// at least one product image
-            Toast.makeText(requireContext(), "Please select product images", Toast.LENGTH_SHORT)
-                .show()
         } else {
-            uploadImage()//uploads the cover image to Firebase Storage and retrieves its download URL
+            if (isCoverUpdate) {
+                uploadImage()
+            } else if (isProductImagesUpdate) {
+                listImages.clear()
+                uploadProductImage()
+            } else {
+                storeData()
+            }
+
         }
     }
 
@@ -129,7 +165,11 @@ class AddProductFragment : Fragment() {
             .addOnSuccessListener {
                 it.storage.downloadUrl.addOnSuccessListener { image ->
                     coverImgUrl = image.toString()
-                    uploadProductImage()//upload the product images.
+                    if (isProductImagesUpdate) {
+                        uploadProductImage()
+                    } else {
+                        storeData()
+                    }
                 }
             }
             .addOnFailureListener {
@@ -175,24 +215,25 @@ class AddProductFragment : Fragment() {
     private fun storeData() {//store the product data in the Firebase Firestore database.
 
         val db = Firebase.firestore.collection("products")
-        val key = db.document().id
 
-        val data = AddProductModel()
-        data.productName = binding.productNameEdt.text.toString()
-        data.productDescription = binding.productDescriptionEdt.text.toString()
-        data.productCoverImg = coverImgUrl.toString()
-        data.productCategory = categoryList[binding.productCategoryDropdown.selectedItemPosition]
-        data.productId = key
-        data.productMrp = binding.productMrpEdt.text.toString()
-        data.productSp = binding.productSpEdt.text.toString()
-        data.productImages = listImages
+        val updateData = hashMapOf<String, Any>(
+            "productName" to binding.productNameEdt.text.toString(),
+            "productDescription" to binding.productDescriptionEdt.text.toString(),
+            "productCoverImg" to coverImgUrl.toString(),
+            "productCategory" to categoryList[binding.productCategoryDropdown.selectedItemPosition],
+            "productId" to data.productId.toString(),
+            "productMrp" to binding.productMrpEdt.text.toString(),
+            "productSp" to binding.productSpEdt.text.toString(),
+            "productImages" to listImages
+        )
 
-        db.document(key).set(data).addOnSuccessListener {//successful a message
-            dialog.dismiss()
-            Toast.makeText(requireContext(), "Product Added", Toast.LENGTH_SHORT).show()
-            binding.productNameEdt.text = null
+        db.document(data.productId!!).update(updateData)
+            .addOnSuccessListener {//successful a message
+                dialog.dismiss()
+                Toast.makeText(requireContext(), "Product Updated", Toast.LENGTH_SHORT).show()
+                binding.productNameEdt.text = null
 
-        }
+            }
 
             .addOnFailureListener {
                 dialog.dismiss()
@@ -219,6 +260,18 @@ class AddProductFragment : Fragment() {
                 )//populate a dropdown list.
                 binding.productCategoryDropdown.adapter = arrayAdapter
                 //It sets the productCategoryDropdown view in the layout to use the arrayAdapter as its data source.
+
+                //set selected category
+                var pos = 0
+                for (doc in categoryList) {//iterates through the documents
+                    Log.d("foundDaa",doc)
+                    Log.d("foundDaa",data.productCategory.toString())
+                    if (data.productCategory==doc) {
+                        Log.d("foundDaa",pos.toString())
+                        binding.productCategoryDropdown.setSelection(pos)
+                    }
+                    pos += 1
+                }
             }
 
     }
