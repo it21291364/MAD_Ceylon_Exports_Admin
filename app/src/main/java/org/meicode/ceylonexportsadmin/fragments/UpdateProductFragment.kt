@@ -47,9 +47,9 @@ class UpdateProductFragment : Fragment() {
         registerForActivityResult(//launchGalleryActivity--->launch the gallery app to select the cover image
             ActivityResultContracts.StartActivityForResult()
         ) {
-            if (it.resultCode == Activity.RESULT_OK) {
+            if (it.resultCode == Activity.RESULT_OK) {//f the result is successful
                 coverImage = it.data!!.data
-                binding.productCoverImg.setImageURI(coverImage)
+                binding.productCoverImg.setImageURI(coverImage)//coverImage URI is updated
                 binding.productCoverImg.visibility = View.VISIBLE
                 isCoverUpdate = true
             }
@@ -59,7 +59,8 @@ class UpdateProductFragment : Fragment() {
         registerForActivityResult(//launchProductActivity---->launch the gallery app to select the product images.
             ActivityResultContracts.StartActivityForResult()
         ) {
-            if (it.resultCode == Activity.RESULT_OK) {
+            if (it.resultCode == Activity.RESULT_OK) {// if the result is successful,
+                //selected image URI is added to the list of product images, and the product images view, flags, and adapter are updated.
                 val imageUrl = it.data!!.data
                 list.add(imageUrl!!)
                 isProductImagesUpdate = true
@@ -80,9 +81,11 @@ class UpdateProductFragment : Fragment() {
         // Inflate the layout for this fragment
         binding = FragmentUpdateProductBinding.inflate(layoutInflater)
 
+        //initialized to store the local product images.
         list = ArrayList()
         listImages = ArrayList()
 
+        //A dialog is created for progress indication.
         dialog = Dialog(requireContext())
         dialog.setContentView(R.layout.progress_layout)
         dialog.setCancelable(false)
@@ -99,12 +102,13 @@ class UpdateProductFragment : Fragment() {
             launchProductActivity.launch(intent)
         }
 
-        adapter = AddProductImageAdapter(list)
-        binding.localProductIamgesRv.adapter = adapter
+        adapter = AddProductImageAdapter(list)//set as the adapter for the local product images recycler view.
+        binding.localProductIamgesRv.adapter = adapter//set as the adapter for the local product images recycler view.
 
 
         if (arguments?.getSerializable("product") != null) {
             data = arguments?.getSerializable("product") as AddProductModel
+            //retrieves the data from the arguments and populates the UI fields with the corresponding values.
             Log.d("testOk", data.toString())
             binding.productNameEdt.setText(data!!.productName)
             binding.productDescriptionEdt.setText(data!!.productDescription)
@@ -138,18 +142,18 @@ class UpdateProductFragment : Fragment() {
     private fun validateData() {////checks if the required fields are filled and
         if (binding.productNameEdt.text.toString().isEmpty()) {
             binding.productNameEdt.requestFocus()
-            binding.productNameEdt.error = "Empty"
+            binding.productNameEdt.error = "Empty"//displays an error message
         } else if (binding.productSpEdt.text.toString().isEmpty()) {
             binding.productSpEdt.requestFocus()
             binding.productSpEdt.error = "Empty"
-        } else {
-            if (isCoverUpdate) {
-                uploadImage()
-            } else if (isProductImagesUpdate) {
-                listImages.clear()
-                uploadProductImage()
+        } else {//If both the product name and selling price fields are not empty,
+            if (isCoverUpdate) {//if the cover image is updated
+                uploadImage()//upload the new cover image
+            } else if (isProductImagesUpdate) {//If the cover image is not updated, it checks if the product images are updated
+                listImages.clear()//clears the existing list of product images
+                uploadProductImage()//upload the new product images.
             } else {
-                storeData()
+                storeData()//store the data without uploading any images.
             }
 
         }
@@ -158,17 +162,18 @@ class UpdateProductFragment : Fragment() {
     private fun uploadImage() {//uploads the cover image to Firebase Storage and retrieves its download URL
         dialog.show()
 
-        val fileName = UUID.randomUUID().toString() + ".jpg"
+        val fileName = UUID.randomUUID().toString() + ".jpg"//A unique filename is generated
 
+        //The cover image will be stored under the "products" folder with the generated filename.
         val refStorage = FirebaseStorage.getInstance().reference.child("products/$fileName")
-        refStorage.putFile(coverImage!!)
+        refStorage.putFile(coverImage!!)//passing coverImage!! as the file to be uploaded
             .addOnSuccessListener {
-                it.storage.downloadUrl.addOnSuccessListener { image ->
+                it.storage.downloadUrl.addOnSuccessListener { image ->//download URL of the uploaded cover image
                     coverImgUrl = image.toString()
-                    if (isProductImagesUpdate) {
-                        uploadProductImage()
-                    } else {
-                        storeData()
+                    if (isProductImagesUpdate) {// checks if the product images are updated
+                        uploadProductImage()//upload the new product images.
+                    } else {//not updated,
+                        storeData()//store the data without uploading any product images.
                     }
                 }
             }
@@ -185,20 +190,21 @@ class UpdateProductFragment : Fragment() {
     private var i = 0
 
     private fun uploadProductImage() {//uploads the product images to Firebase Storage and retrieves their download URLs.
-        dialog.show()
+        dialog.show()//indicate that the images are being uploaded.
 
-        val fileName = UUID.randomUUID().toString() + ".jpg"
+        val fileName = UUID.randomUUID().toString() + ".jpg"//A unique file name is generated.
 
+        //The Firebase Storage reference is created using the generated file name and the "products" directory
         val refStorage = FirebaseStorage.getInstance().reference.child("products/$fileName")
-        refStorage.putFile(list[i])
+        refStorage.putFile(list[i])// upload the product image from the list at index i to Firebase Storage.
             .addOnSuccessListener {
                 it.storage.downloadUrl.addOnSuccessListener { image ->
-                    listImages.add(image!!.toString())
-                    if (list.size == listImages.size) {
+                    listImages.add(image!!.toString())// the download URL of the uploaded image is added to the listImages
+                    if (list.size == listImages.size) {//number of product images===size of list
                         storeData()
-                    } else {
-                        i += 1
-                        uploadProductImage()
+                    } else {//If there are still remaining product images to upload
+                        i += 1//move to the next image in the list,
+                        uploadProductImage()//recursively called to upload the next product image.
                     }
                 }
             }
@@ -214,9 +220,10 @@ class UpdateProductFragment : Fragment() {
 
     private fun storeData() {//store the product data in the Firebase Firestore database.
 
-        val db = Firebase.firestore.collection("products")
+        val db = Firebase.firestore.collection("products")// store the updated product data.
 
         val updateData = hashMapOf<String, Any>(
+            //values for the fields are obtained from the respective UI elements
             "productName" to binding.productNameEdt.text.toString(),
             "productDescription" to binding.productDescriptionEdt.text.toString(),
             "productCoverImg" to coverImgUrl.toString(),
@@ -253,7 +260,7 @@ class UpdateProductFragment : Fragment() {
                 }
                 categoryList.add(0, "Select Category")
 
-                val arrayAdapter = ArrayAdapter(
+                val arrayAdapter = ArrayAdapter(//ArrayAdapter==data source+custom layout for the dropdown items.
                     requireContext(),
                     R.layout.dropdown_item_layout,
                     categoryList
@@ -262,13 +269,13 @@ class UpdateProductFragment : Fragment() {
                 //It sets the productCategoryDropdown view in the layout to use the arrayAdapter as its data source.
 
                 //set selected category
-                var pos = 0
-                for (doc in categoryList) {//iterates through the documents
+                var pos = 0//keep track of the position of the selected category
+                for (doc in categoryList) {//iterates through the category list
                     Log.d("foundDaa",doc)
                     Log.d("foundDaa",data.productCategory.toString())
-                    if (data.productCategory==doc) {
+                    if (data.productCategory==doc) {//the category of the updated product===category name
                         Log.d("foundDaa",pos.toString())
-                        binding.productCategoryDropdown.setSelection(pos)
+                        binding.productCategoryDropdown.setSelection(pos)// select the corresponding category in the dropdown.
                     }
                     pos += 1
                 }

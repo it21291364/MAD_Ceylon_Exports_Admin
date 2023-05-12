@@ -43,6 +43,7 @@ class ProductsAdapter(var context: Context, val list: ArrayList<AddProductModel>
         holder.binding.productSp.text = list[position].productSp
         holder.binding.productDescription.text = list[position].productDescription
 
+        //The image from list[position].productCoverImg---->holder.binding.imageView2
         Glide.with(context).load(list[position].productCoverImg).into(holder.binding.imageView2)
 
         //handle list of products
@@ -50,18 +51,18 @@ class ProductsAdapter(var context: Context, val list: ArrayList<AddProductModel>
         holder.binding.productImgRecyclerView.adapter = adapter
 
 
-        holder.binding.editBtn.setOnClickListener(View.OnClickListener {
+        holder.binding.editBtn.setOnClickListener(View.OnClickListener {//When the editBtn is clicked, it triggers the View.OnClickListener callback.
             val bundle = Bundle()
-            bundle.putSerializable("product", list[position])
-            Navigation.findNavController(it)
+            bundle.putSerializable("product", list[position])//The selected item from the list at the given position is put into the bundle as a serializable object with the key "product".
+            Navigation.findNavController(it)//it----> (the clicked view)
                 .navigate(R.id.action_productFragment_to_updateProductFragment, bundle)
-        })
-        holder.binding.deleteBtn.setOnClickListener(View.OnClickListener {
+        })//navigate to the destination with the ID
+        holder.binding.deleteBtn.setOnClickListener(View.OnClickListener {//When the deleteBtn is clicked, it triggers the View.OnClickListener callback.
             val db = Firebase.firestore
-            db.collection("products").document(list[position].productId.toString()).delete()
+            db.collection("products").document(list[position].productId.toString()).delete()//delete--> "products" collection with the ID corresponding to the selected item's productId.
             try {
-                list.removeAt(position)
-                notifyDataSetChanged()
+                list.removeAt(position)//remove the item from the list at the given position.
+                notifyDataSetChanged()//update the RecyclerView and reflect the changes.
             } catch (e: Exception) {
             }
         })

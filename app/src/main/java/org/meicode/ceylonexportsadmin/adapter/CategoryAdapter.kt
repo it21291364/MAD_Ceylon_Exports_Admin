@@ -44,18 +44,19 @@ class CategoryAdapter(var context: Context, val list: ArrayList<CategoryModel>) 
         Glide.with(context).load(list[position].img)
             .into(holder.binding.imageView2)////Glide--->load the image from the img property of the CategoryModel.
 
-        holder.binding.editBtn.setOnClickListener(View.OnClickListener {
-            val bundle = Bundle()
-            bundle.putSerializable("category", list[position])
-            Navigation.findNavController(it)
-                .navigate(R.id.action_categoryFragment_to_AddCategoryFragment, bundle)
+        holder.binding.editBtn.setOnClickListener(View.OnClickListener {//When the editBtn is clicked, it triggers the View.OnClickListener callback.
+            val bundle = Bundle()//new Bundle is created
+            bundle.putSerializable("category", list[position])//The selected item from the list at the given position is put into the bundle as a serializable object with the key "category".
+            Navigation.findNavController(it)//it---> (the clicked view)
+                    // navigate to the destination with the ID
+                .navigate(R.id.action_categoryFragment_to_AddCategoryFragment, bundle)//bundle-->carry the selected category data to the destination fragment.
         })
-        holder.binding.deleteBtn.setOnClickListener(View.OnClickListener {
+        holder.binding.deleteBtn.setOnClickListener(View.OnClickListener {//When the deleteBtn is clicked, it triggers the View.OnClickListener callback.
             val db = Firebase.firestore
-            db.collection("categories").document(list[position].id.toString()).delete()
+            db.collection("categories").document(list[position].id.toString()).delete()//delete()--->categories" collection with the ID corresponding to the selected item's id
             try {
-                list.removeAt(position)
-                notifyDataSetChanged()
+                list.removeAt(position)//After deleting ---->remove the item from the list at the given position.
+                notifyDataSetChanged()//update the RecyclerView and reflect the changes
             } catch (e: Exception) {
 
             }

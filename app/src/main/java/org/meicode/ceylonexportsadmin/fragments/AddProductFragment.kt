@@ -43,21 +43,21 @@ class AddProductFragment : Fragment() {
         registerForActivityResult(//launchGalleryActivity--->launch the gallery app to select the cover image
             ActivityResultContracts.StartActivityForResult()
         ) {
-            if (it.resultCode == Activity.RESULT_OK) {
+            if (it.resultCode == Activity.RESULT_OK) {//gallery activity was successful---->retrieves the selected image's URI from it.data!!.data.
                 coverImage = it.data!!.data
                 binding.productCoverImg.setImageURI(coverImage)
-                binding.productCoverImg.visibility = VISIBLE
+                binding.productCoverImg.visibility = VISIBLE// selected image should be displayed.
             }
         }
 
     private var launchProductActivity =
-        registerForActivityResult(//launchProductActivity---->launch the gallery app to select the product images.
-            ActivityResultContracts.StartActivityForResult()
-        ) {
-            if (it.resultCode == Activity.RESULT_OK) {
-                val imageUrl = it.data!!.data
-                list.add(imageUrl!!)
-                adapter.notifyDataSetChanged()
+        registerForActivityResult(//launchProductActivity---->launch the gallery app to select multiple product images.
+            ActivityResultContracts.StartActivityForResult()//result contract for starting an activity and receiving a result.
+        ) {//it parameter represents the result data.
+            if (it.resultCode == Activity.RESULT_OK) {//gallery activity was successful.
+                val imageUrl = it.data!!.data// code retrieves the selected image's URI
+                list.add(imageUrl!!)//The selected image's URI is added to a list, list
+                adapter.notifyDataSetChanged()//displayed images in the UI to include the newly selected image.
             }
         }
 
@@ -69,20 +69,22 @@ class AddProductFragment : Fragment() {
         // Inflate the layout for this fragment
         binding = FragmentAddProductBinding.inflate(layoutInflater)
 
-        list = ArrayList()
-        listImages = ArrayList()
+        list = ArrayList()// initialized as ArrayList instances.
+        listImages = ArrayList()// initialized as ArrayList instances.
 
         dialog = Dialog(requireContext())
-        dialog.setContentView(R.layout.progress_layout)
-        dialog.setCancelable(false)
+        dialog.setContentView(R.layout.progress_layout)//set to display a custom progress layout.
+        dialog.setCancelable(false)//non-cancelable.
 
         binding.selectCoverImg.setOnClickListener {
+            //When clicked, it launches the gallery app to select a cover image for the product.
             val intent = Intent("android.intent.action.GET_CONTENT")
             intent.type = "image/*"
             launchGalleryActivity.launch(intent)
         }
 
         binding.productImgBtn.setOnClickListener {
+            //When clicked, it launches the gallery app to select multiple product images.
             val intent = Intent("android.intent.action.GET_CONTENT")
             intent.type = "image/*"
             launchProductActivity.launch(intent)
@@ -94,6 +96,7 @@ class AddProductFragment : Fragment() {
         adapter = AddProductImageAdapter(list)
         binding.productImgRecyclerView.adapter = adapter
 
+        //When clicked, it triggers the validateData function to validate the entered product data.
         binding.submitProductBtn.setOnClickListener {
             validateData()
         }
@@ -120,14 +123,15 @@ class AddProductFragment : Fragment() {
     }
 
     private fun uploadImage() {//uploads the cover image to Firebase Storage and retrieves its download URL
-        dialog.show()
+        dialog.show()//indicating that the image is being uploaded
 
-        val fileName = UUID.randomUUID().toString() + ".jpg"
+        val fileName = UUID.randomUUID().toString() + ".jpg"//A unique filename is generated
 
+        //The cover image will be stored under the "products" folder with the generated filename.
         val refStorage = FirebaseStorage.getInstance().reference.child("products/$fileName")
-        refStorage.putFile(coverImage!!)
+        refStorage.putFile(coverImage!!)//passing coverImage!! as the file to be uploaded
             .addOnSuccessListener {
-                it.storage.downloadUrl.addOnSuccessListener { image ->
+                it.storage.downloadUrl.addOnSuccessListener { image ->//download URL of the uploaded cover image
                     coverImgUrl = image.toString()
                     uploadProductImage()//upload the product images.
                 }
@@ -147,22 +151,26 @@ class AddProductFragment : Fragment() {
     private fun uploadProductImage() {//uploads the product images to Firebase Storage and retrieves their download URLs.
         dialog.show()
 
-        val fileName = UUID.randomUUID().toString() + ".jpg"
+        val fileName = UUID.randomUUID().toString() + ".jpg"//A unique filename is generated
 
+        //product images will be stored under the "products" folder with the generated filename.
         val refStorage = FirebaseStorage.getInstance().reference.child("products/$fileName")
         refStorage.putFile(list[i])
+            //list----->the product images
+            // i----->current image to be uploaded.
             .addOnSuccessListener {
-                it.storage.downloadUrl.addOnSuccessListener { image ->
+                it.storage.downloadUrl.addOnSuccessListener { image ->// download URL is added
                     listImages.add(image!!.toString())
-                    if (list.size == listImages.size) {
-                        storeData()
+                    //number of uploaded images=====total number of product images
+                    if (list.size == listImages.size) {//If they are equal
+                        storeData()// all images have been uploaded,
                     } else {
-                        i += 1
-                        uploadProductImage()
+                        i += 1//increments i by 1 to move to the next image index
+                        uploadProductImage()// recursively called to upload the next image
                     }
                 }
             }
-            .addOnFailureListener {
+            .addOnFailureListener {//If the image upload fails
                 dialog.dismiss()
                 Toast.makeText(
                     requireContext(),
@@ -174,10 +182,11 @@ class AddProductFragment : Fragment() {
 
     private fun storeData() {//store the product data in the Firebase Firestore database.
 
-        val db = Firebase.firestore.collection("products")
-        val key = db.document().id
+        val db = Firebase.firestore.collection("products")//Firestore collection reference for "products"
+        val key = db.document().id//A unique key is generated for the document
 
-        val data = AddProductModel()
+        val data = AddProductModel()//An instance of AddProductModel is created
+        //properties are populated with the relevant data.
         data.productName = binding.productNameEdt.text.toString()
         data.productDescription = binding.productDescriptionEdt.text.toString()
         data.productCoverImg = coverImgUrl.toString()
@@ -190,7 +199,7 @@ class AddProductFragment : Fragment() {
         db.document(key).set(data).addOnSuccessListener {//successful a message
             dialog.dismiss()
             Toast.makeText(requireContext(), "Product Added", Toast.LENGTH_SHORT).show()
-            binding.productNameEdt.text = null
+            binding.productNameEdt.text = null//productNameEdt UI component is also cleared.
 
         }
 
